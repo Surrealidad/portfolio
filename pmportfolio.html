@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pablo Ministral — Data Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12;
+    --surface: #13161b;
+    --border: #1e2228;
+    --border-light: #252a33;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #e8a020;
+    --accent2: #3b9ede;
+    --tag-bg: #1a1e25;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: center top;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border-light);
+    background: rgba(13,15,18,0.92);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .logo span { color: var(--accent); }
+
+  nav a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-left: 1.8rem;
+    transition: color 0.2s;
+  }
+
+  nav a:hover { color: var(--text); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 7rem 0 5rem;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero-label::before {
+    content: '';
+    display: block;
+    width: 2rem;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.8rem;
+    color: var(--text);
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero-body {
+    max-width: 600px;
+    color: #9aa0ab;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .meta-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border-light);
+    border-radius: 2px;
+    color: var(--muted);
+    background: var(--surface);
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    padding-top: 1rem;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+  }
+
+  /* ── PROJECT CARDS ── */
+  .projects {
+    padding: 4rem 0 6rem;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 3px;
+    padding: 2.2rem 2.4rem;
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    transition: border-color 0.2s, transform 0.2s;
+    animation: fadeUp 0.6s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .project-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .project-card:nth-child(even)::before {
+    background: var(--accent2);
+  }
+
+  .project-card:hover {
+    border-color: #2e333d;
+    transform: translateY(-2px);
+  }
+
+  .project-card:hover::before { opacity: 1; }
+
+  .project-card:nth-child(1) { animation-delay: 0.1s; }
+  .project-card:nth-child(2) { animation-delay: 0.2s; }
+  .project-card:nth-child(3) { animation-delay: 0.3s; }
+  .project-card:nth-child(4) { animation-delay: 0.4s; }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .card-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    font-weight: 500;
+  }
+
+  .type-pbi {
+    background: rgba(232,160,32,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(232,160,32,0.2);
+  }
+
+  .type-streamlit {
+    background: rgba(59,158,222,0.1);
+    color: var(--accent2);
+    border: 1px solid rgba(59,158,222,0.2);
+  }
+
+  .card-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: #333840;
+    letter-spacing: 0.05em;
+  }
+
+  .project-card h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.8rem;
+    color: var(--text);
+  }
+
+  .project-card p {
+    color: #8a909a;
+    font-size: 0.92rem;
+    line-height: 1.75;
+    margin-bottom: 1.2rem;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.06em;
+    padding: 0.22rem 0.6rem;
+    background: var(--tag-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 2px;
+    color: var(--muted);
+  }
+
+  .card-link-col {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 0.3rem;
+  }
+
+  .card-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border-light);
+    padding: 0.55rem 1rem;
+    border-radius: 2px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    background: var(--tag-bg);
+  }
+
+  .card-link:hover {
+    color: var(--text);
+    border-color: #3a3f4a;
+    background: #1e2228;
+  }
+
+  .card-link svg {
+    width: 12px; height: 12px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border-light);
+    padding: 2.5rem 0;
+    text-align: center;
+  }
+
+  footer p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: #383d47;
+    text-transform: uppercase;
+  }
+
+  footer a {
+    color: #4a505c;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  footer a:hover { color: var(--muted); }
+
+  /* ── ANIMATION ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .project-card {
+      grid-template-columns: 1fr;
+    }
+    .card-link-col {
+      padding-top: 0;
+    }
+    h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">Pablo<span>.</span>Ministral</a>
+    <nav>
+      <a href="https://linkedin.com/in/pabloministral" target="_blank">LinkedIn</a>
+      <a href="https://github.com/Surrealidad" target="_blank">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <section class="hero">
+      <div class="hero-label">Data Portfolio</div>
+      <h1>Analytics &amp; Data Science<br><em>Projects</em></h1>
+      <p class="hero-body">
+        Senior Production and Development Management professional with 15 years of industry experience across the Video Game and Defense sectors. M.Sc. in Data Science, B.Sc. in Statistics. This portfolio showcases applied work in data analytics, predictive modelling, and interactive reporting across gaming, localization, and labour market domains.
+      </p>
+      <div class="hero-meta">
+        <span class="meta-pill">Power BI</span>
+        <span class="meta-pill">Streamlit</span>
+        <span class="meta-pill">Python</span>
+        <span class="meta-pill">XGBoost</span>
+        <span class="meta-pill">Snowflake</span>
+        <span class="meta-pill">Madrid, ES</span>
+      </div>
+    </section>
+
+    <section class="projects">
+      <div class="section-header">
+        <span class="section-label">Selected Work</span>
+        <div class="section-line"></div>
+      </div>
+
+      <!-- Card 1 -->
+      <div class="project-card">
+        <div class="card-content">
+          <div class="card-top">
+            <span class="card-type type-pbi">Power BI</span>
+            <span class="card-num">01 / 04</span>
+          </div>
+          <h2>Data Science Salaries — Global Analysis</h2>
+          <p>
+            An exploratory analysis of compensation trends across Data Science and adjacent roles, built as part of an M.Sc. programme. Covers salary distributions by job title, experience level, company size, remote ratio, and geography using publicly available survey data. Includes geo-located KPI views and cross-filtering across multiple dimensions.
+          </p>
+          <div class="tags">
+            <span class="tag">Power BI</span>
+            <span class="tag">DAX</span>
+            <span class="tag">Labour Market Data</span>
+            <span class="tag">Geo Visualisation</span>
+            <span class="tag">M.Sc. Project</span>
+          </div>
+        </div>
+        <div class="card-link-col">
+          <a class="card-link" href="https://app.powerbi.com/view?r=eyJrIjoiNDU5YTA0ZjAtOTZlYy00ZjE4LWE1MzktNDIzMjIwZjRkOGQ5IiwidCI6IjgyNjkwODMwLWU5ZDQtNGVkMi1iNTkwLTlkMGU5OGJlNTY2MyJ9" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            View Report
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="project-card">
+        <div class="card-content">
+          <div class="card-top">
+            <span class="card-type type-pbi">Power BI</span>
+            <span class="card-num">02 / 04</span>
+          </div>
+          <h2>Vendor Management Dashboard</h2>
+          <p>
+            An operational analytics dashboard demonstrating how internal form-based feedback can be integrated with vendor performance data to support structured supplier evaluation. Designed around a realistic localization vendor management workflow, combining quantitative KPIs with qualitative scoring from internal stakeholder submissions.
+          </p>
+          <div class="tags">
+            <span class="tag">Power BI</span>
+            <span class="tag">DAX</span>
+            <span class="tag">Vendor Management</span>
+            <span class="tag">Operational Analytics</span>
+            <span class="tag">Forms Integration</span>
+          </div>
+        </div>
+        <div class="card-link-col">
+          <a class="card-link" href="https://app.powerbi.com/view?r=eyJrIjoiNGViMjBkYzUtNWUyNS00MGMzLTllOTgtYjU4NDAzNGU0MDMwIiwidCI6IjgyNjkwODMwLWU5ZDQtNGVkMi1iNTkwLTlkMGU5OGJlNTY2MyJ9" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            View Report
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="project-card">
+        <div class="card-content">
+          <div class="card-top">
+            <span class="card-type type-streamlit">Streamlit</span>
+            <span class="card-num">03 / 04</span>
+          </div>
+          <h2>Voice Over Session Cost Predictor</h2>
+          <p>
+            An end-to-end machine learning system for predicting Voice Over localisation session costs. Built on a synthetic dataset modelling realistic VO production parameters, an XGBoost regression model achieves 13.9% MAPE (Stage 1) and 23.7% MAPE (Stage 2), against baselines of 19.2% and 28.2% respectively. Includes SHAP-based explainability and a Streamlit interface for interactive quote generation.
+          </p>
+          <div class="tags">
+            <span class="tag">Python</span>
+            <span class="tag">XGBoost</span>
+            <span class="tag">SHAP</span>
+            <span class="tag">Streamlit</span>
+            <span class="tag">Localization</span>
+            <span class="tag">Predictive Modelling</span>
+          </div>
+        </div>
+        <div class="card-link-col">
+          <a class="card-link" href="https://voquoting.streamlit.app/" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open App
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="project-card">
+        <div class="card-content">
+          <div class="card-top">
+            <span class="card-type type-streamlit">Streamlit</span>
+            <span class="card-num">04 / 04</span>
+          </div>
+          <h2>Veilstone — Gaming Analytics Report</h2>
+          <p>
+            A full-stack analytics report for a fictional action-exploration title, demonstrating applied data science in a live-service gaming context. Covers cohort retention analysis, A/B test evaluation, player segmentation, difficulty curve analysis, and additional behavioural metrics — all built on a synthetic but structurally realistic dataset.
+          </p>
+          <div class="tags">
+            <span class="tag">Python</span>
+            <span class="tag">Streamlit</span>
+            <span class="tag">Cohort Analysis</span>
+            <span class="tag">A/B Testing</span>
+            <span class="tag">Player Segmentation</span>
+            <span class="tag">Gaming Analytics</span>
+          </div>
+        </div>
+        <div class="card-link-col">
+          <a class="card-link" href="https://veilstone.streamlit.app/" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open App
+          </a>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <p>Pablo Ministral &mdash; Madrid, ES &mdash; <a href="/cdn-cgi/l/email-protection#d7a7b6b5bbb897babeb9bea4a3a5b6bbf9b3b2a1"><span class="__cf_emai
