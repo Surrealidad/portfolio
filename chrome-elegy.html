@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chrome Elegy — Pablo Ministral</title>
+<meta name="description" content="Chrome Elegy: a turn-based tactics roguelite. Procedurally generated maps across four biomes, cover and elevation, salvage-driven unlocks.">
+<meta property="og:title" content="Chrome Elegy — turn-based tactics roguelite">
+<meta property="og:description" content="Isometric grid combat across four procedurally generated biomes, with salvage-driven unlocks.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ministral.dev/chrome-elegy.html">
+<meta property="og:image" content="https://ministral.dev/chrome-elegy/chrome-elegy-02.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%230b0e11'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='bold' text-anchor='middle' fill='%235ecfc4'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e11;
+    --surface: rgba(19, 23, 28, 0.72);
+    --border-light: #232830;
+    --border-hover: #2f3540;
+    --text: #e8eaf0;
+    --body: #9aa0ab;
+    --muted: #6b7280;
+    --accent: #5ecfc4;
+    --accent-soft: rgba(94, 207, 196, 0.12);
+    --accent-line: rgba(94, 207, 196, 0.28);
+    --tag-bg: rgba(26, 30, 37, 0.6);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(1200px 760px at 8% 0%, rgba(94, 207, 196, 0.20), transparent 58%),
+      radial-gradient(1000px 620px at 96% 3%, rgba(88, 148, 208, 0.13), transparent 58%),
+      linear-gradient(180deg, #16222a 0%, #101820 18%, #0b0e12 52%, #08090c 100%);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  header, main, footer { position: relative; z-index: 1; }
+  .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header {
+    border-bottom: 1px solid var(--border-light);
+    background: rgba(11, 14, 17, 0.45);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; padding: 1.1rem 2rem; max-width: 900px; margin: 0 auto;
+  }
+  .logo {
+    font-family: 'Fraunces', serif; font-weight: 800; font-size: 1rem;
+    letter-spacing: 0.04em; color: var(--text); text-decoration: none; white-space: nowrap;
+  }
+  .logo span { color: var(--accent); }
+  nav { display: flex; flex-wrap: wrap; justify-content: flex-end; }
+  nav a {
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted);
+    text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase;
+    margin-left: 1.6rem; transition: color 0.2s;
+  }
+  nav a:hover { color: var(--text); }
+
+  .hero { padding: 4.5rem 0 2.5rem; }
+  .hero-label {
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .hero-label::before {
+    content: ''; display: block; width: 2rem; height: 1px; background: var(--accent);
+  }
+  h1 {
+    font-family: 'Fraunces', serif; font-weight: 800;
+    font-size: clamp(2rem, 4vw, 2.9rem); line-height: 1.15;
+    letter-spacing: -0.02em; margin-bottom: 1.2rem; color: var(--text);
+  }
+  .lede { max-width: 640px; color: var(--body); font-size: 1.05rem; line-height: 1.8; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 2rem; }
+  .meta-pill {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.06em;
+    padding: 0.35rem 0.85rem; border: 1px solid var(--border-light);
+    border-radius: 2px; color: var(--muted); background: var(--surface);
+  }
+
+  .section-header {
+    display: flex; align-items: center; gap: 1rem;
+    margin: 3.5rem 0 1.5rem;
+  }
+  .section-label {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); white-space: nowrap;
+  }
+  .section-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-light), transparent); }
+
+  figure { margin: 0 0 1.5rem; }
+  video, figure img {
+    display: block; width: 100%; height: auto;
+    border: 1px solid var(--border-light); border-radius: 3px; background: #05070a;
+  }
+  figcaption {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.05em;
+    color: var(--muted); margin-top: 0.6rem;
+  }
+
+  .prose p { color: var(--body); font-size: 1rem; line-height: 1.85; margin-bottom: 1.2rem; max-width: 680px; }
+  .prose strong { color: var(--text); font-weight: 500; }
+  .prose .credits {
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.04em;
+    color: var(--muted); border-top: 1px solid var(--border-light);
+    padding-top: 1.1rem; margin-top: 1.8rem;
+  }
+
+  .notes { list-style: none; max-width: 680px; }
+  .notes li {
+    color: var(--body); font-size: 1rem; line-height: 1.8;
+    padding-left: 1.4rem; position: relative; margin-bottom: 1rem;
+  }
+  .notes li::before {
+    content: ''; position: absolute; left: 0; top: 0.75em;
+    width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+  }
+  .notes b { color: var(--text); font-weight: 500; }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.5rem; }
+  .cta {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em;
+    text-transform: uppercase; text-decoration: none; border-radius: 2px;
+    padding: 0.7rem 1.2rem; border: 1px solid var(--border-light);
+    background: var(--tag-bg); color: var(--muted); transition: all 0.2s;
+  }
+  .cta:hover { color: var(--text); border-color: var(--border-hover); background: rgba(30,34,40,0.8); }
+  .cta.primary { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
+  .cta.primary:hover { color: #06201d; background: var(--accent); border-color: var(--accent); }
+  .cta.pending { border-style: dashed; color: #4a505c; cursor: default; }
+  .cta svg {
+    width: 13px; height: 13px; stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+  }
+
+  .status {
+    border: 1px solid var(--border-light); border-left: 3px solid var(--accent);
+    background: var(--surface); border-radius: 3px; padding: 1.2rem 1.4rem;
+    margin: 2.5rem 0 0; max-width: 680px;
+  }
+  .status p { color: var(--body); font-size: 0.92rem; line-height: 1.75; margin: 0; }
+
+  footer {
+    border-top: 1px solid var(--border-light); padding: 2.5rem 0;
+    text-align: center; margin-top: 5rem;
+  }
+  footer p {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em;
+    color: #454b57; text-transform: uppercase;
+  }
+  footer a { color: #626977; text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; }
+  }
+  @media (max-width: 640px) {
+    .header-inner { padding: 1rem 1.25rem; }
+    .container { padding: 0 1.25rem; }
+    nav a { margin-left: 1rem; }
+    .hero { padding: 3rem 0 2rem; }
+    h1 { font-size: 1.9rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="/">Pablo<span>.</span>Ministral</a>
+    <nav>
+      <a href="/">Projects</a>
+      <a href="https://github.com/Surrealidad" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://linkedin.com/in/pabloministral" target="_blank" rel="noopener">LinkedIn</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <section class="hero">
+      <div class="hero-label">Prototype</div>
+      <h1>Chrome Elegy</h1>
+      <p class="lede">
+        A turn-based tactics roguelite. Isometric grid combat on procedurally generated maps across four biomes, where cover, elevation and initiative decide fights before the dice do. Runs feed the next one: salvage unlocks classes and abilities that carry forward, so each attempt starts from a stronger position than the last.
+      </p>
+      <div class="hero-meta">
+        <span class="meta-pill">Turn-based tactics</span>
+        <span class="meta-pill">Roguelite</span>
+        <span class="meta-pill">Procedural generation</span>
+        <span class="meta-pill">Systems design</span>
+        <span class="meta-pill">Windows</span>
+        <span class="meta-pill">In QA</span>
+      </div>
+    </section>
+
+    <div class="section-header">
+      <span class="section-label">Gameplay</span>
+      <div class="section-line"></div>
+    </div>
+
+    <figure>
+      <video controls preload="metadata" playsinline poster="chrome-elegy/chrome-elegy-poster.jpg">
+        <source src="chrome-elegy/chrome-elegy-gameplay.mp4" type="video/mp4">
+        Your browser cannot play this video.
+      </video>
+      <figcaption>Four moments from a single session: a ranged exchange, a climb and takedown, an ambush during the machine turn, and a trade that goes both ways.</figcaption>
+    </figure>
+
+    <div class="section-header">
+      <span class="section-label">What it is</span>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="prose">
+      <p>
+        Two sides alternate turns on a grid built in three dimensions. Units spend a turn moving and acting, and almost every decision is a trade: take the high ground and lose the shot this turn, or fire now from poor cover and accept the odds on the panel.
+      </p>
+      <p>
+        Shots resolve on a stated hit chance rather than a hidden one. The interface shows the number before you commit, along with what is modifying it, so a loss reads as a decision that went badly rather than as the game cheating.
+      </p>
+      <p>
+        A run crosses four biomes, each with procedurally generated scenarios, so the maps are never learned by heart. Salvage taken from downed machines unlocks classes and abilities that persist past the run that earned them. Losing is expected, and the next attempt begins with more of the toolkit available.
+      </p>
+    </div>
+
+    <div class="section-header">
+      <span class="section-label">How it was made</span>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="prose">
+      <p>
+        I designed the systems, modelled the assets and wrote the music. The code was written by an AI assistant working to my specification: I decided what the game should do, reviewed each iteration, and cut what did not work.
+      </p>
+      <p class="credits">Design, 3D modelling and music by Pablo Ministral. Implementation written with an AI coding assistant.</p>
+    </div>
+
+    <div class="section-header">
+      <span class="section-label">Design notes</span>
+      <div class="section-line"></div>
+    </div>
+
+    <ul class="notes">
+      <li><b>Cover and elevation are the same system.</b> Height changes both what you can see and what can see you, so the map is the main tactical variable rather than a backdrop for it.</li>
+      <li><b>The run is the unit of progress.</b> Salvage buys permanent unlocks rather than in-run upgrades, so a failed run still moves the player forward and the difficulty curve is shaped by what they have earned, not by a slider.</li>
+      <li><b>Four biomes, generated scenarios.</b> Maps are procedurally built, so a run tests whether the player understands the systems rather than whether they have memorised the level.</li>
+      <li><b>Distinct roles, not stat blocks.</b> Each class solves a different problem, so a squad is a set of answers rather than a pile of numbers.</li>
+      <li><b>Readable at a glance.</b> Flat colour, strong silhouettes and floating damage numbers keep the board legible without a tutorial.</li>
+    </ul>
+
+    <div class="section-header">
+      <span class="section-label">Screens</span>
+      <div class="section-line"></div>
+    </div>
+
+    <figure>
+      <img src="chrome-elegy/chrome-elegy-02.jpg" alt="Isometric tactical view showing hit percentages, cover indicators and the tactics panel" loading="lazy">
+      <figcaption>Hit chances, cover modifiers and available actions, all on screen before committing.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="chrome-elegy/chrome-elegy-01.jpg" alt="Isometric map with units positioned across multiple elevations" loading="lazy">
+      <figcaption>Multi-level maps: elevation changes both line of sight and exposure.</figcaption>
+    </figure>
+
+    <div class="status">
+      <p>
+        <strong>Status:</strong> playable prototype, currently in QA. The build is unsigned, so Windows will show a SmartScreen warning on first run. A download will be linked here once the first tagged build is out.
+      </p>
+    </div>
+
+    <div class="cta-row">
+      <span class="cta pending">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download soon
+      </span>
+      <a class="cta" href="/">
+        <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        All projects
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <p>
+      Pablo Ministral &mdash;
+      <a id="contact" href="#">contact</a> &mdash;
+      <a href="https://github.com/Surrealidad" target="_blank" rel="noopener">GitHub</a> &mdash;
+      <a href="https://linkedin.com/in/pabloministral" target="_blank" rel="noopener">LinkedIn</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var el = document.getElementById('contact');
+    if (el) {
+      var user = ['pablo', 'ministral'].join('.');
+      var host = ['gmail', 'com'].join('.');
+      el.href = 'mailto:' + user + '@' + host;
+      el.textContent = user + '@' + host;
+    }
+  })();
+</script>
+
+</body>
+</html>
