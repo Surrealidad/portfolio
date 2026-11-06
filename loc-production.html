@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Localization Production Tracking — Pablo Ministral</title>
+<meta name="description" content="Planning and tracking dashboard for a voice-over localization project: 8 territories, five stages, earned value KPIs and automatic risk flags.">
+<meta property="og:title" content="Localization Production Tracking">
+<meta property="og:description" content="Plan against simulated production data for a voice-over localization project, with schedule and cost KPIs down to territory and stage.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ministral.dev/loc-production.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%230b0e11'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='bold' text-anchor='middle' fill='%235ecfc4'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-0: #0b0e11; --surface-1: #1a1a19; --surface-2: #232322;
+    --border: #2f2f2d; --grid: #2a2a28;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --accent: #5ecfc4;
+    --s-cm: #3987e5; --s-tr: #d95926; --s-rec: #199e70; --s-mas: #c98500; --s-qa: #d55181;
+    --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+    --pv: #8f8e86; --ev: #5ecfc4; --ac: #e66767;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-0); color: var(--text-primary); font: 15px/1.5 'DM Sans', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .site-header { border-bottom: 1px solid #232830; background: rgba(11, 14, 17, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); position: sticky; top: 0; z-index: 10; }
+  .site-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.1rem 24px; max-width: 1180px; margin: 0 auto; }
+  .logo { font-family: 'Fraunces', serif; font-weight: 800; font-size: 1rem; letter-spacing: 0.04em; color: var(--text-primary); text-decoration: none; white-space: nowrap; }
+  .logo span { color: var(--accent); }
+  .site-nav a { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: #6b7280; text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 1.6rem; }
+  .site-nav a:hover { color: var(--text-primary); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-family: 'Fraunces', serif; font-size: 30px; margin: 0 0 6px; font-weight: 800; letter-spacing: -0.02em; }
+  h2 { font-size: 17px; margin: 0 0 4px; font-weight: 600; }
+  .lede { color: var(--text-secondary); margin: 0 0 20px; max-width: 780px; }
+  .sub { color: var(--text-muted); font-size: 13px; margin: 0 0 12px; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+  .tab { background: none; border: none; color: var(--text-muted); font: inherit; font-size: 14.5px; padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab[aria-selected="true"] { color: var(--text-primary); border-bottom-color: var(--accent); }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin-bottom: 18px; }
+  .group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .label { color: var(--text-muted); font-size: 13px; margin-right: 4px; }
+  .chip { background: var(--surface-1); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .chip:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .chip[aria-pressed="true"] { background: rgba(94,207,196,0.14); border-color: var(--accent); color: var(--text-primary); }
+  .chip:focus-visible, .linkbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input[type=range] { accent-color: var(--accent); width: 160px; vertical-align: middle; }
+  .weekval { font-variant-numeric: tabular-nums; color: var(--text-primary); font-size: 13px; min-width: 34px; display: inline-block; }
+
+  .tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .tile .k { color: var(--text-muted); font-size: 12.5px; display: flex; justify-content: space-between; gap: 6px; }
+  .tile .v { font-size: 26px; font-weight: 650; margin: 2px 0; font-variant-numeric: tabular-nums; }
+  .tile .d { color: var(--text-secondary); font-size: 12.5px; }
+
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 12px; margin-bottom: 20px; position: relative; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--text-secondary); margin: 4px 0 6px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 16px; height: 0; border-top: 2px solid; display: inline-block; }
+  .legend i.sq { width: 9px; height: 9px; border: none; border-radius: 2px; }
+  .linkbtn { background: none; border: 1px solid var(--border); color: var(--text-secondary); border-radius: 6px; font: inherit; font-size: 12.5px; padding: 4px 10px; cursor: pointer; }
+  .linkbtn:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
+  svg text { fill: var(--text-muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  svg .dlabel { fill: var(--text-secondary); font-size: 12px; }
+  .tip { position: absolute; pointer-events: none; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-size: 12.5px; min-width: 220px; display: none; z-index: 5; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+  .tip .t { font-weight: 600; margin-bottom: 4px; }
+  .tip .row { display: flex; justify-content: space-between; gap: 14px; color: var(--text-secondary); }
+  .tip .row b { color: var(--text-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .tip .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; }
+  .tip .note { color: var(--text-muted); margin-top: 4px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-muted); font-weight: 500; }
+  td { color: var(--text-secondary); }
+  tr.click { cursor: pointer; }
+  tr.click:hover td { background: var(--surface-2); color: var(--text-primary); }
+  .tablewrap { max-height: 360px; overflow: auto; margin-top: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .notes p { color: var(--text-secondary); margin: 0 0 10px; font-size: 14px; }
+  .notes p b { color: var(--text-primary); font-weight: 600; }
+
+  .st { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; white-space: nowrap; }
+  .st .ic { width: 15px; height: 15px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #111312; }
+  .st.good .ic { background: var(--good); } .st.warning .ic { background: var(--warning); }
+  .st.serious .ic { background: var(--serious); } .st.critical .ic { background: var(--critical); color: #fff; }
+  .st.neutral .ic { background: #383835; color: var(--text-secondary); }
+
+  .flags { list-style: none; margin: 0; padding: 0; }
+  .flags li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--grid); font-size: 13.5px; color: var(--text-secondary); }
+  .flags li:last-child { border-bottom: none; }
+  .flags b { color: var(--text-primary); font-weight: 600; }
+  .heat td.c { text-align: center; font-weight: 500; color: var(--text-primary); border: 2px solid var(--surface-1); border-radius: 4px; min-width: 88px; }
+  details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px; }
+  details[open] summary { margin-bottom: 10px; }
+  [hidden] { display: none !important; }
+  @media (max-width: 980px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 860px) { .tiles { grid-template-columns: repeat(2, 1fr); } .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="logo" href="/">Pablo<span>.</span>Ministral</a>
+    <nav class="site-nav">
+      <a href="/">Projects</a>
+      <a href="https://github.com/Surrealidad" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://linkedin.com/in/pabloministral" target="_blank" rel="noopener">LinkedIn</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap">
+  <h1>Localization Production Tracking</h1>
+  <p class="lede">A 40,000 file voice-over localization project for 8 territories, split into batches that move through five stages. The plan sets dates and costs for every batch, stage and territory. Production data is compared against it to show where the project stands on time and money, down to a single territory and stage.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabTrack" aria-selected="true" aria-controls="viewTrack">Tracking</button>
+    <button class="tab" role="tab" id="tabPlan" aria-selected="false" aria-controls="viewPlan">Plan</button>
+  </div>
+
+  <div class="controls">
+    <div class="group" role="group" aria-label="Territory filter"><span class="label">Territories</span><span id="chips" style="display:contents"></span></div>
+    <div class="group" id="weekCtl"><span class="label">Status at</span><input type="range" id="week" min="4" max="37" value="37" aria-label="Status week, up to today"><span class="weekval" id="weekVal">W37</span><span class="label" id="weekNote" style="margin-left:6px">today</span></div>
+  </div>
+
+  <!-- ================= TRACKING ================= -->
+  <section id="viewTrack" role="tabpanel" aria-labelledby="tabTrack">
+    <div class="tiles" id="tTiles"></div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Risk flags</h2>
+        <p class="sub" id="flagSub">Raised automatically from the thresholds below. Worst first.</p>
+        <ul class="flags" id="flags"></ul>
+      </div>
+      <div class="card">
+        <h2>Territory scorecard</h2>
+        <p class="sub">Click a row to focus on that territory.</p>
+        <div id="score"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Territory and stage performance</h2>
+          <p class="sub" id="heatSub"></p>
+        </div>
+        <div class="group" role="group" aria-label="Metric">
+          <button class="chip" id="hmSched" aria-pressed="true">Weeks late</button>
+          <button class="chip" id="hmLost" aria-pressed="false">Weeks lost</button>
+          <button class="chip" id="hmCost" aria-pressed="false">Cost</button>
+        </div>
+      </div>
+      <div id="heat"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Files completed, plan against actual</h2>
+          <p class="sub" id="trackSub"></p>
+        </div>
+        <div class="group" role="group" aria-label="Stage filter" id="stageChips"></div>
+      </div>
+      <div class="legend" id="trackLegend"></div>
+      <div id="trackStair"></div>
+      <div class="tip" id="tipT"></div>
+    </div>
+
+    <div class="card">
+      <h2>Cost and earned value</h2>
+      <p class="sub" id="evmSub"></p>
+      <div class="legend">
+        <span><i style="border-color:var(--pv);border-top-style:dashed"></i>Planned value (budget by week)</span>
+        <span><i style="border-color:var(--ev)"></i>Earned value (budget of work done)</span>
+        <span><i style="border-color:var(--ac)"></i>Actual cost</span>
+        <span><i style="border-color:var(--ac);border-top-style:dotted"></i>Forecast cost</span>
+      </div>
+      <div id="evm"></div>
+      <div class="tip" id="tipE"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card notes">
+        <h2>How to read the KPIs</h2>
+        <p><b>SPI</b>, schedule performance: budget of the work done divided by the budget of the work planned by now. Below 1 means behind.</p>
+        <p><b>Schedule variance in weeks</b>: how far the work done is from where the plan expected it, in weeks (earned schedule). Negative means behind.</p>
+        <p><b>CPI</b>, cost performance: budget of the work done divided by what it actually cost. Below 1 means over budget. QA weeks with nothing to test count as cost with no work done.</p>
+        <p><b>Forecast cost</b>: actual cost so far, plus the remaining work at its planned cost adjusted by each territory and stage's CPI so far, plus QA team weeks until the forecast delivery.</p>
+        <p><b>Weeks late</b> per stage: forecast end of the batch the stage is working on, against its planned end. It includes delay inherited from earlier stages.</p><p><b>Weeks lost</b> per stage: actual minus planned durations. It only counts delay the stage created itself, which is what points at the vendor or team to talk to.</p>
+      </div>
+      <div class="card notes">
+        <h2>Flag thresholds</h2>
+        <p><span class="st warning"><span class="ic">!</span>Watch</span> 1 week lost in a stage, CPI below 0.95, or 3 QA team weeks idle.</p>
+        <p><span class="st serious"><span class="ic">!</span>At risk</span> 2 weeks lost, CPI below 0.90, a QA batch held up, or delivery forecast 1 week after the plan.</p>
+        <p><span class="st critical"><span class="ic">✕</span>Critical</span> 4 weeks lost or more, CPI below 0.85, or delivery 2 or more weeks after the plan.</p>
+        <p><span class="st good"><span class="ic">✓</span>Ahead</span> At least 2 weeks gained in a stage, or ahead of plan overall.</p>
+        <details style="margin-top:14px">
+          <summary>How this scenario was generated</summary>
+          <p id="scenario"></p>
+          <button class="linkbtn" id="newScen">Generate a new scenario</button>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PLAN ================= -->
+  <section id="viewPlan" role="tabpanel" aria-labelledby="tabPlan" hidden>
+    <div class="tiles" id="pTiles"></div>
+    <div class="card">
+      <div class="card-head">
+        <div><h2>Files completed per stage</h2><p class="sub" id="chartSub"></p></div>
+        <button class="linkbtn" id="tableBtn" aria-expanded="false">Show as table</button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div id="stair"></div>
+      <div class="tablewrap" id="stairTable" hidden></div>
+      <div class="tip" id="tip"></div>
+    </div>
+    <div class="card">
+      <h2>Batch schedule</h2>
+      <p class="sub">The plan gives every territory the same schedule. Each bar is one batch at one stage; hover for details.</p>
+      <div id="gantt"></div>
+      <div class="tip" id="tip2"></div>
+    </div>
+    <div class="card">
+      <h2>Planned spend</h2>
+      <p class="sub" id="spendSub"></p>
+      <div id="spend"></div>
+      <div class="tip" id="tip3"></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div><h2>Budget by territory and stage</h2>
+        <p class="sub">Territory factors apply to Translation and Recording. Content Management is shared and split evenly across the 8 territories. QA is a weekly team cost.</p></div>
+        <button class="linkbtn" id="budgetBtn" aria-expanded="false">Show as table</button>
+      </div>
+      <div class="legend" id="legend2"></div>
+      <div id="budgetBars"></div>
+      <div class="tablewrap" id="budgetTable" hidden></div>
+      <div class="tip" id="tip4"></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Planning assumptions</h2>
+        <p class="sub">Duration = base weeks × (files ÷ 5,000)<sup>e</sup>, rounded up to whole weeks, minimum one week. An exponent below 1 means larger batches are handled more efficiently.</p>
+        <div id="assump"></div>
+      </div>
+      <div class="card notes">
+        <h2>How the plan works</h2>
+        <p><b>Content Management</b> runs once, in the source language, for all 40,000 files. Each batch it finishes is released to the 8 territories at the same time.</p>
+        <p><b>Translation and Recording</b> are external vendors, one per territory, and each territory moves on as soon as its own batch is ready.</p>
+        <p><b>Mastering</b> is a single in-house team with capacity for all 8 territories. It takes a batch for a territory as soon as that territory has finished recording it, without waiting for the others.</p>
+        <p><b>QA</b> is one in-house tester team per territory. The teams are formed together and billed by the week. A batch goes to QA only once it has been mastered for all 8 territories, so a late territory holds up QA for everyone, and the waiting is paid for.</p>
+        <p><b>Batches</b>: <span id="batchList"></span> files per territory.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  // =================== Model: plan ===================
+  const BATCHES = [10000, 3000, 8000, 5000, 6000, 4000, 2000, 2000];
+  const NB = BATCHES.length;
+  const STAGES = [
+    { id: "cm",  rate: 1, name: "Content Management", short: "CM",          base: 2, e: 0.58, color: "var(--s-cm)" },
+    { id: "tr",  rate: 3, name: "Translation",        short: "Translation", base: 2, e: 0.75, color: "var(--s-tr)" },
+    { id: "rec", rate: 5, name: "VO Recording",       short: "Recording",   base: 4, e: 0.80, color: "var(--s-rec)" },
+    { id: "mas", rate: 1, name: "Mastering",          short: "Mastering",   base: 2, e: 0.60, color: "var(--s-mas)" },
+    { id: "qa",  rate: 3, name: "QA",                 short: "QA",          base: 3, e: 0.80, color: "var(--s-qa)" }
+  ];
+  const S = Object.fromEntries(STAGES.map(s => [s.id, s]));
+  const TERR = [
+    { id: "FR", cf: 1.03, name: "French" }, { id: "DE", cf: 1.00, name: "German" },
+    { id: "ES", cf: 0.88, name: "Spanish" }, { id: "IT", cf: 0.92, name: "Italian" },
+    { id: "LATAM", cf: 0.81, name: "LATAM Spanish" }, { id: "JA", cf: 1.55, name: "Japanese" },
+    { id: "ZH", cf: 1.25, name: "Mandarin" }, { id: "MSA", cf: 0.90, name: "Modern Standard Arabic" }
+  ];
+  const TB = Object.fromEntries(TERR.map(t => [t.id, t]));
+  const TOTAL = BATCHES.reduce((a, b) => a + b, 0);
+  const QA_WEEK = 4250;
+  const FACTORED = new Set(["tr", "rec"]);
+  const planDur = (sid, k) => Math.max(1, Math.ceil(S[sid].base * Math.pow(BATCHES[k] / 5000, S[sid].e) - 1e-6));
+  // planned cost of one per-file item (QA is weekly, handled separately)
+  const pcost = (sid, tid, k) => sid === "cm"
+    ? BATCHES[k] * S.cm.rate / TERR.length
+    : BATCHES[k] * S[sid].rate * (FACTORED.has(sid) ? TB[tid].cf : 1);
+
+  // Generic scheduler. item(sid, tid, k, ready, laneFree) -> {s, e}; weeks are 0-based starts, e exclusive.
+  function schedule(item) {
+    const sc = { cm: {}, tr: {}, rec: {}, mas: {}, qa: {} };
+    let lane = 0;
+    const cm = BATCHES.map((n, k) => { const r = item("cm", "src", k, 0, lane); lane = r.e; return r; });
+    TERR.forEach(t => sc.cm[t.id] = cm);
+    ["tr", "rec", "mas"].forEach((sid, i) => {
+      const prev = ["cm", "tr", "rec"][i];
+      TERR.forEach(t => { let l = 0; sc[sid][t.id] = BATCHES.map((n, k) => { const r = item(sid, t.id, k, sc[prev][t.id][k].e, l); l = r.e; return r; }); });
+    });
+    TERR.forEach(t => {
+      let l = 0;
+      sc.qa[t.id] = BATCHES.map((n, k) => {
+        const ready = Math.max(...TERR.map(x => sc.mas[x.id][k].e));
+        const r = item("qa", t.id, k, ready, l); l = r.e; return r;
+      });
+    });
+    return sc;
+  }
+  const plan = schedule((sid, tid, k, ready, lane) => { const s = Math.max(ready, lane); return { s, e: s + planDur(sid, k) }; });
+  const N = Math.max(...TERR.map(t => plan.qa[t.id][NB - 1].e));
+  const QA_FORM = Math.min(...TERR.map(t => plan.qa[t.id][0].s)); // teams formed at the planned QA start
+  const qaBAC = tid => (plan.qa[tid][NB - 1].e - QA_FORM) * QA_WEEK;
+
+  // =================== Model: simulated production ===================
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const PROFILES = {
+    neutral: { deltas: [-1, 0, 1], lo: 0.85, hi: 1.15, label: "on plan, give or take" },
+    lag:     { deltas: [0, 1, 2],  lo: 0.95, hi: 1.40, label: "lagging" },
+    lead:    { deltas: [-2, -1, 0], lo: 0.80, hi: 1.00, label: "leading" }
+  };
+  let SIM = null;
+  function simulate(seed) {
+    const rnd = mulberry32(seed);
+    const ids = TERR.map(t => t.id);
+    for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
+    const cls = {}; ids.forEach((id, i) => cls[id] = i < 4 ? "neutral" : i < 6 ? "lag" : "lead");
+    // function-level twist: in a lagging or leading territory, each stage carries the profile with
+    // probability 0.5 (at least one does); the others behave like a normal territory.
+    const stageCls = {};
+    TERR.forEach(t => {
+      stageCls[t.id] = {};
+      const sids = ["tr", "rec", "mas", "qa"];
+      if (cls[t.id] === "neutral") sids.forEach(s => stageCls[t.id][s] = "neutral");
+      else {
+        let any = false;
+        sids.forEach(s => { const hit = rnd() < 0.5; stageCls[t.id][s] = hit ? cls[t.id] : "neutral"; any = any || hit; });
+        if (!any) stageCls[t.id][sids[Math.floor(rnd() * 4)]] = cls[t.id];
+      }
+    });
+    const draw = p => ({ d: p.deltas[Math.floor(rnd() * p.deltas.length)], f: p.lo + (p.hi - p.lo) * rnd() });
+    const dr = { cm: { src: BATCHES.map(() => draw(PROFILES.neutral)) } };
+    ["tr", "rec", "mas", "qa"].forEach(sid => { dr[sid] = {}; TERR.forEach(t => dr[sid][t.id] = BATCHES.map(() => draw(PROFILES[stageCls[t.id][sid]]))); });
+    const qaRate = {}; TERR.forEach(t => { const p = PROFILES[stageCls[t.id].qa]; qaRate[t.id] = p.lo + (p.hi - p.lo) * rnd(); });
+    const truth = schedule((sid, tid, k, ready, lane) => {
+      // a one-week item cannot be one week shorter, so in a neutral stage it keeps its duration
+      // (otherwise the clamp would make "neutral" lean late)
+      const pd = planDur(sid, k), prof = sid === "cm" ? "neutral" : stageCls[tid][sid];
+      const d = prof === "neutral" && pd === 1 ? 0 : dr[sid][tid][k].d;
+      const s = Math.max(ready, lane); return { s, e: s + Math.max(1, pd + d) };
+    });
+    SIM = { seed, cls, stageCls, dr, qaRate, truth };
+  }
+  const acost = (sid, tid, k) => pcost(sid, tid, k) * SIM.dr[sid][sid === "cm" ? "src" : tid][k].f;
+
+  // Status at week T: done items are actuals; the rest is forecast at planned durations from today.
+  let T = 37, ST = null;
+  function status() {
+    const tr = SIM.truth;
+    const fc = schedule((sid, tid, k, ready, lane) => {
+      const x = tr[sid][sid === "cm" ? TERR[0].id : tid][k];
+      if (x.e <= T) return x;
+      if (x.s < T) return { s: x.s, e: Math.max(T + 1, x.s + planDur(sid, k)) };
+      const s = Math.max(ready, lane, T); return { s, e: s + planDur(sid, k) };
+    });
+    const NN = Math.max(N, ...TERR.map(t => fc.qa[t.id][NB - 1].e));
+    const form = Math.min(QA_FORM, ...TERR.map(t => tr.qa[t.id][0].s)); // teams formed on plan, or earlier if work arrives early
+    // per territory, per stage: weekly arrays of PV, EV, AC, forecast cost
+    const Z = () => new Array(NN + 2).fill(0);
+    const M = {};
+    TERR.forEach(t => {
+      M[t.id] = {};
+      STAGES.forEach(st => {
+        const m = { pv: Z(), ev: Z(), ac: Z(), fc: Z(), evT: 0, acT: 0 };
+        if (st.id !== "qa") {
+          BATCHES.forEach((n, k) => {
+            const p = plan[st.id][t.id][k], x = tr[st.id][t.id][k];
+            m.pv[p.e] += pcost(st.id, t.id, k);
+            if (x.e <= T) { m.ev[x.e] += pcost(st.id, t.id, k); m.ac[x.e] += acost(st.id, t.id, k); m.evT += pcost(st.id, t.id, k); m.acT += acost(st.id, t.id, k); }
+          });
+          const cpi = m.acT ? m.evT / m.acT : 1;
+          BATCHES.forEach((n, k) => { if (tr[st.id][t.id][k].e > T) m.fc[fc[st.id][t.id][k].e] += pcost(st.id, t.id, k) / cpi; });
+        } else {
+          const planEnd = plan.qa[t.id][NB - 1].e, fcEnd = fc.qa[t.id][NB - 1].e, rate = QA_WEEK * SIM.qaRate[t.id];
+          for (let w = QA_FORM + 1; w <= planEnd; w++) m.pv[w] += QA_WEEK;
+          for (let w = form + 1; w <= Math.min(T, fcEnd); w++) { m.ac[w] += rate; m.acT += rate; }
+          for (let w = T + 1; w <= fcEnd; w++) m.fc[w] += rate;
+          BATCHES.forEach((n, k) => { const x = tr.qa[t.id][k]; if (x.e <= T) { const v = qaBAC(t.id) * n / TOTAL; m.ev[x.e] += v; m.evT += v; } });
+          // idle tester weeks so far: billed weeks with no batch in QA
+          let idle = 0;
+          for (let w = form + 1; w <= Math.min(T, fcEnd); w++) if (!tr.qa[t.id].some(x => x.s < w && x.e >= w)) idle++;
+          m.idle = idle; m.rate = rate;
+        }
+        M[t.id][st.id] = m;
+      });
+    });
+    ST = { fc, NN, M };
+  }
+
+  // ----- aggregations -----
+  const cum = a => { const o = a.slice(); for (let i = 1; i < o.length; i++) o[i] += o[i - 1]; return o; };
+  function agg(terrs, sids) {
+    sids = sids || STAGES.map(s => s.id);
+    const NN = ST.NN, Z = new Array(NN + 2).fill(0);
+    const sum = key => { const o = Z.slice(); terrs.forEach(t => sids.forEach(s => ST.M[t.id][s][key].forEach((v, i) => o[i] += v))); return o; };
+    const pv = cum(sum("pv")), ev = cum(sum("ev")), ac = cum(sum("ac")), fcw = sum("fc");
+    const PV = pv[T], EV = ev[T], AC = ac[T], BAC = pv[NN];
+    let fcRest = 0; fcw.forEach(v => fcRest += v);
+    const EAC = AC + fcRest;
+    // earned schedule: when did the plan expect to have earned EV?
+    let ES = 0;
+    if (EV >= pv[NN] - 1e-6) ES = pv.findIndex(v => v >= pv[NN] - 1e-6);
+    else {
+      let w = 0; while (w < NN && pv[w + 1] <= EV + 1e-6) w++;
+      let w2 = w + 1; while (w2 < NN && pv[w2] <= pv[w] + 1e-6) w2++;
+      ES = w + (pv[w2] > pv[w] ? (EV - pv[w]) / (pv[w2] - pv[w]) * (w2 - w) : 0);
+    }
+    const end = Math.max(...terrs.map(t => ST.fc.qa[t.id][NB - 1].e));
+    const planEnd = Math.max(...terrs.map(t => plan.qa[t.id][NB - 1].e));
+    const idle = terrs.reduce((a, t) => a + ST.M[t.id].qa.idle, 0);
+    const idleCost = terrs.reduce((a, t) => a + ST.M[t.id].qa.idle * ST.M[t.id].qa.rate, 0);
+    return { pv, ev, ac, fcw, PV, EV, AC, BAC, EAC, SPI: PV ? EV / PV : 1, CPI: AC ? EV / AC : 1, SVt: ES - T, end, planEnd, idle, idleCost };
+  }
+  // weeks late of the batch a stage is on (or last batch if finished); positive = late
+  function lateWeeks(sid, tid) {
+    const tr = SIM.truth[sid][tid];
+    let k = tr.findIndex(x => x.e > T); if (k < 0) k = NB - 1;
+    return { k, late: ST.fc[sid][tid][k].e - plan[sid][tid][k].e };
+  }
+  // delay created by the stage itself: actual minus planned duration, finished batches plus any overrun on the current one
+  function lostWeeks(sid, tid) {
+    const tr = SIM.truth[sid][tid]; let l = 0;
+    BATCHES.forEach((n, k) => { const x = tr[k], pd = planDur(sid, k);
+      if (x.e <= T) l += (x.e - x.s) - pd; else if (x.s < T) l += Math.max(0, (T - x.s) - pd); });
+    return l;
+  }
+  // which territory sets the start of each QA batch still to come (latest to finish Mastering)
+  function pacing() {
+    const counts = {}, list = []; TERR.forEach(t => counts[t.id] = 0);
+    BATCHES.forEach((n, k) => {
+      if (!TERR.every(t => SIM.truth.qa[t.id][k].s >= T)) return;
+      const ends = TERR.map(t => ST.fc.mas[t.id][k].e), mx = Math.max(...ends);
+      const planReady = Math.max(...TERR.map(t => plan.mas[t.id][k].e));
+      if (mx <= planReady) return;
+      TERR.forEach((t, i) => { if (ends[i] === mx) { counts[t.id]++; list.push({ k, t }); } });
+    });
+    return { counts, list };
+  }
+  const lostStatus = l => l >= 4 ? "critical" : l >= 2 ? "serious" : l >= 1 ? "warning" : l <= -2 ? "good" : "neutral";
+  function stageCPI(sid, tid) { const m = ST.M[tid][sid]; return m.acT ? m.evT / m.acT : null; }
+
+  // ----- status mapping -----
+  const ST_LABEL = { good: "Ahead", neutral: "On plan", warning: "Watch", serious: "At risk", critical: "Critical" };
+  const ST_ICON = { good: "✓", neutral: "–", warning: "!", serious: "!", critical: "✕" };
+  const RANK = { critical: 4, serious: 3, warning: 2, neutral: 1, good: 0 };
+  const lateStatus = l => l >= 3 ? "critical" : l >= 2 ? "serious" : l >= 1 ? "warning" : l <= -1 ? "good" : "neutral";
+  const cpiStatus = c => c == null ? "neutral" : c < 0.85 ? "critical" : c < 0.90 ? "serious" : c < 0.95 ? "warning" : c >= 1.05 ? "good" : "neutral";
+  const svStatus = v => v <= -2.5 ? "critical" : v <= -1.5 ? "serious" : v <= -0.75 ? "warning" : v >= 0.75 ? "good" : "neutral";
+  const endStatus = d => d >= 2 ? "critical" : d >= 1 ? "serious" : d <= -1 ? "good" : "neutral";
+  const worst = (...a) => a.reduce((x, y) => RANK[y] > RANK[x] ? y : x, "good");
+  const badge = (st, label) => `<span class="st ${st}"><span class="ic">${ST_ICON[st]}</span>${label || ST_LABEL[st]}</span>`;
+
+  // ----- formatting -----
+  const fmt = n => Math.round(n).toLocaleString("en-GB");
+  const money = v => (v < 0 ? "−$" : "$") + Math.round(Math.abs(v)).toLocaleString("en-GB");
+  const money2 = v => "$" + v.toFixed(2);
+  const moneyShort = v => { const a = Math.abs(v), s = v < 0 ? "−$" : "$"; return a >= 1e6 ? s + (a / 1e6).toFixed(2) + "M" : a >= 1e3 ? s + Math.round(a / 1e3).toLocaleString("en-GB") + "k" : s + Math.round(a); };
+  const signed = (v, d = 1) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+
+  // =================== State & controls ===================
+  let selected = new Set(TERR.map(t => t.id));
+  const sel = () => TERR.filter(t => selected.has(t.id));
+  let view = "track", heatMetric = "sched", stageFocus = "all";
+
+  const chips = document.getElementById("chips");
+  function chip(parent, label, pressed, onClick, title) {
+    const b = document.createElement("button"); b.className = "chip"; b.textContent = label; b.setAttribute("aria-pressed", pressed);
+    if (title) b.title = title; b.addEventListener("click", onClick); parent.appendChild(b); return b;
+  }
+  function renderChips() {
+    chips.innerHTML = "";
+    chip(chips, "All", selected.size === TERR.length, () => { selected = new Set(TERR.map(t => t.id)); renderAll(); });
+    TERR.forEach(t => chip(chips, t.id, selected.has(t.id) && selected.size !== TERR.length, () => {
+      if (selected.size === TERR.length) selected = new Set([t.id]);
+      else if (selected.has(t.id)) { selected.delete(t.id); if (!selected.size) selected = new Set(TERR.map(x => x.id)); }
+      else selected.add(t.id);
+      renderAll();
+    }, t.name));
+    const sc = document.getElementById("stageChips"); sc.innerHTML = "";
+    chip(sc, "All stages", stageFocus === "all", () => { stageFocus = "all"; renderAll(); });
+    STAGES.forEach(s => chip(sc, s.short, stageFocus === s.id, () => { stageFocus = s.id; renderAll(); }));
+  }
+
+  // =================== SVG helpers ===================
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  const txt = (parent, attrs, s) => { const t = el("text", attrs, parent); t.textContent = s; return t; };
+  function niceTicks(max) {
+    const pw = Math.pow(10, Math.floor(Math.log10(max / 4)));
+    const tick = [0.5, 1, 2, 2.5, 5, 10].map(c => c * pw).filter(t => { const n = Math.ceil(max / t - 1e-9); return n >= 3 && n <= 6; })
+      .sort((p, q) => Math.ceil(max / p - 1e-9) * p - Math.ceil(max / q - 1e-9) * q)[0];
+    const n = Math.ceil(max / tick - 1e-9); return { tick, n, top: n * tick };
+  }
+  function frame(host, H, m, NN, ytop, yfmt, ticks) {
+    host.innerHTML = "";
+    const W = host.clientWidth || 1100, iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const x = w => m.l + (w / NN) * iw, y = v => m.t + ih - (v / ytop) * ih;
+    const svg = el("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}` }, host);
+    ticks.forEach(v => { el("line", { x1: m.l, x2: m.l + iw, y1: y(v), y2: y(v), stroke: "var(--grid)" }, svg); txt(svg, { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, yfmt(v)); });
+    const step = NN > 40 ? 4 : 2;
+    for (let w = step; w <= NN; w += step) txt(svg, { x: x(w), y: H - 12, "text-anchor": "middle" }, "W" + w);
+    txt(svg, { x: m.l, y: H - 12 }, "Week");
+    return { svg, W, iw, ih, x, y };
+  }
+  const stepPath = (x, y, v, from, to) => { let d = `M${x(from)},${y(v[from])}`; for (let w = from + 1; w <= to; w++) d += `H${x(w)}V${y(v[w])}`; return d; };
+  function hover(f, card, tip, onWeek, NN) {
+    const { svg, W, iw, ih, x } = f;
+    const m = { l: x(0), t: 0 };
+    const cross = el("line", { y1: 14, y2: 14 + ih, stroke: "var(--text-muted)", "stroke-dasharray": "3 3", visibility: "hidden" }, svg);
+    const hit = el("rect", { x: x(0), y: 14, width: iw, height: ih, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", ev => {
+      const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
+      const w = Math.min(NN, Math.max(1, Math.ceil(((px - x(0)) / iw) * NN)));
+      cross.setAttribute("x1", x(w)); cross.setAttribute("x2", x(w)); cross.setAttribute("visibility", "visible");
+      tip.innerHTML = onWeek(w); tip.style.display = "block";
+      const cr = card.getBoundingClientRect();
+      let left = ev.clientX - cr.left + 16; if (left + tip.offsetWidth > cr.width - 8) left = ev.clientX - cr.left - tip.offsetWidth - 16;
+      tip.style.left = left + "px"; tip.style.top = (ev.clientY - cr.top - 20) + "px";
+    });
+    hit.addEventListener("mouseleave", () => { tip.style.display = "none"; cross.setAttribute("visibility", "hidden"); });
+  }
+  function todayLine(f, label) {
+    label = label || (T === 37 ? `Today, W${T}` : `Status, W${T}`);
+    const { svg, x, ih } = f;
+    el("line", { x1: x(T), x2: x(T), y1: 10, y2: 14 + ih, stroke: "var(--text-secondary)", "stroke-width": 1 }, svg);
+    txt(svg, { x: x(T) + 5, y: 22, class: "dlabel" }, label || `Today, W${T}`);
+  }
+
+  // =================== Tracking view ===================
+  function renderTiles() {
+    const terrs = sel(), a = agg(terrs);
+    const dEnd = a.end - a.planEnd, dCost = a.EAC - a.BAC;
+    const tiles = [
+      ["Schedule", a.SPI.toFixed(2), `SPI · ${signed(a.SVt)} weeks against plan`, svStatus(a.SVt)],
+      ["Cost", a.CPI.toFixed(2), `CPI · ${moneyShort(Math.abs(a.AC - a.EV))} ${a.AC >= a.EV ? "over" : "under"} the budget of the work done`, cpiStatus(a.CPI)],
+      ["Forecast delivery", `W${a.end}`, (dEnd ? `${signed(dEnd, 0)} weeks against W${a.planEnd}` : `on plan, W${a.planEnd}`) + (() => { const pc = pacing(); const top = TERR.filter(t => pc.counts[t.id]).sort((p, q) => pc.counts[q.id] - pc.counts[p.id])[0]; return top ? ` · paced by ${top.name}` : ""; })(), endStatus(dEnd)],
+      ["Forecast cost", moneyShort(a.EAC), `${dCost >= 0 ? "+" : "−"}${moneyShort(Math.abs(dCost))} (${signed(100 * dCost / a.BAC)}%) against the ${moneyShort(a.BAC)} budget`, cpiStatus(a.BAC / a.EAC)],
+      ["QA idle so far", `${a.idle} wk`, `tester weeks with nothing to test · ${moneyShort(a.idleCost)}`, a.idle >= 8 ? "serious" : a.idle >= 3 ? "warning" : "neutral"]
+    ];
+    document.getElementById("tTiles").innerHTML = tiles.map(([k, v, d, st]) =>
+      `<div class="tile"><div class="k"><span>${k}</span>${badge(st)}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join("");
+  }
+
+  function buildFlags(terrs) {
+    const out = [];
+    // one line per territory and stage, about the delay and cost the stage created itself
+    terrs.forEach(t => ["tr", "rec", "mas"].forEach(sid => {
+      const lost = lostWeeks(sid, t.id), c = stageCPI(sid, t.id), { k, late } = lateWeeks(sid, t.id);
+      const done = SIM.truth[sid][t.id][NB - 1].e <= T;
+      const st = worst(lostStatus(lost) === "good" ? "neutral" : lostStatus(lost), cpiStatus(c) === "good" ? "neutral" : cpiStatus(c));
+      const parts = [];
+      if (lost >= 1) parts.push(`${lost} week${lost > 1 ? "s" : ""} lost against planned durations`);
+      if (lost >= 1 && !done && late > 0) parts.push(`now ${late} week${late > 1 ? "s" : ""} late on batch ${k + 1}`);
+      if (lost >= 1 && done) parts.push("stage finished");
+      if (c != null && c < 0.95) parts.push(`CPI ${c.toFixed(2)}, ${Math.round((1 / c - 1) * 100)}% over the planned cost of the work done`);
+      if (RANK[st] >= 2) out.push({ st, html: `<b>${t.name} ${S[sid].short}</b>: ${parts.join("; ")}.` });
+      else if (lost <= -2) out.push({ st: "good", html: `<b>${t.name} ${S[sid].short}</b> has gained ${-lost} weeks on planned durations${c != null && c >= 1 ? `, CPI ${c.toFixed(2)}` : ""}.` });
+    }));
+    // delivery and QA, which are shared by every territory
+    const a = agg(TERR), dEnd = a.end - a.planEnd, pc = pacing();
+    const pacers = TERR.filter(t => pc.counts[t.id]).sort((p, q) => pc.counts[q.id] - pc.counts[p.id]);
+    if (dEnd >= 1) out.push({ st: endStatus(dEnd), html: `<b>Final delivery</b> forecast in W${a.end}, ${dEnd} week${dEnd > 1 ? "s" : ""} after the plan.${pacers.length ? ` QA for the remaining batches is paced by ${pacers.map(t => `${t.name} (${pc.counts[t.id]} batch${pc.counts[t.id] > 1 ? "es" : ""})`).join(", ")}.` : ""}` });
+    const tr = SIM.truth, kq = BATCHES.findIndex((n, k) => TERR.every(t => tr.qa[t.id][k].s >= T));
+    if (kq > 0 && TERR.every(t => tr.qa[t.id][kq - 1].e <= T)) {
+      const missing = TERR.filter(t => tr.mas[t.id][kq].e > T);
+      if (missing.length) out.push({ st: "serious", html: `<b>QA batch ${kq + 1}</b> cannot start: waiting on ${missing.map(t => t.name).join(", ")} to finish Mastering, and all 8 tester teams wait with it.` });
+    }
+    if (a.idle >= 3) out.push({ st: a.idle >= 8 ? "serious" : "warning", html: `<b>QA teams</b> have been paid for ${a.idle} team weeks with nothing to test (${moneyShort(a.idleCost)}).` });
+    out.sort((p, q) => RANK[q.st] - RANK[p.st]);
+    return out;
+  }
+  function renderFlags() {
+    const f = buildFlags(sel());
+    const ul = document.getElementById("flags");
+    const bad = f.filter(x => x.st !== "good"), good = f.filter(x => x.st === "good");
+    const show = bad.slice(0, 10).concat(good.slice(0, 4));
+    ul.innerHTML = show.length ? show.map(x => `<li>${badge(x.st)}<span>${x.html}</span></li>`).join("") : `<li>${badge("neutral")}<span>No flags at W${T}.</span></li>`;
+    document.getElementById("flagSub").textContent = `${bad.length} issue${bad.length === 1 ? "" : "s"} and ${good.length} positive note${good.length === 1 ? "" : "s"} at W${T}. Worst first${bad.length > 10 ? ", showing the top 10" : ""}.`;
+  }
+
+  function renderScore() {
+    const pc = pacing();
+    const own = ["tr", "rec", "mas"];
+    const rows = TERR.map(t => {
+      const a = agg([t]);
+      const lost = own.reduce((x, sid) => x + lostWeeks(sid, t.id), 0);
+      const stw = worst(...own.map(sid => lostStatus(lostWeeks(sid, t.id))).map(v => v === "good" ? "neutral" : v),
+        ...own.map(sid => cpiStatus(stageCPI(sid, t.id))).map(v => v === "good" ? "neutral" : v), cpiStatus(a.CPI) === "good" ? "neutral" : cpiStatus(a.CPI));
+      const st = RANK[stw] >= 3 ? stw : (lost <= -3 || a.SVt >= 0.75) ? "good" : stw;
+      return { t, a, lost, st, pace: pc.counts[t.id] };
+    }).sort((p, q) => RANK[q.st] - RANK[p.st] || q.lost - p.lost);
+    let h = `<table><thead><tr><th>Territory</th><th style="text-align:left">Status</th><th>SPI</th><th>CPI</th><th>Weeks lost</th><th>Paces QA</th><th>Forecast cost</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+      const dim = selected.has(r.t.id) ? "" : ' style="opacity:.45"';
+      h += `<tr class="click" data-t="${r.t.id}"${dim}><td>${r.t.name}</td><td style="text-align:left">${badge(r.st)}</td><td>${r.a.SPI.toFixed(2)}</td><td>${r.a.CPI.toFixed(2)}</td><td>${signed(r.lost, 0) || "0"}</td><td>${r.pace ? r.pace + " batch" + (r.pace > 1 ? "es" : "") : "–"}</td><td>${moneyShort(r.a.EAC)}</td></tr>`;
+    });
+    document.getElementById("score").innerHTML = h + `</tbody></table><p class="sub" style="margin-top:8px">Status and weeks lost cover the stages each territory runs on its own (Translation, Recording, Mastering). QA delay is shared, so it shows under delivery instead. Paces QA counts the remaining QA batches waiting on this territory.</p>`;
+    document.querySelectorAll("#score tr.click").forEach(tr => tr.addEventListener("click", () => {
+      const id = tr.dataset.t; selected = selected.size === 1 && selected.has(id) ? new Set(TERR.map(t => t.id)) : new Set([id]); renderAll();
+    }));
+  }
+
+  // diverging fill: negative (good: early / under budget) toward blue, positive (bad) toward red
+  function divFill(v, scale) {
+    const a = Math.min(1, Math.abs(v) / scale), mid = [56, 56, 53], pole = v > 0 ? [208, 59, 59] : [57, 135, 229];
+    const c = mid.map((m, i) => Math.round(m + (pole[i] - m) * a)); return `rgb(${c.join(",")})`;
+  }
+  function renderHeat() {
+    const terrs = sel();
+    document.getElementById("hmSched").setAttribute("aria-pressed", heatMetric === "sched");
+    document.getElementById("hmCost").setAttribute("aria-pressed", heatMetric === "cost");
+    document.getElementById("hmLost").setAttribute("aria-pressed", heatMetric === "lost");
+    document.getElementById("heatSub").textContent = heatMetric === "sched"
+      ? `Where each stage stands at W${T}: weeks late on the batch it is working on, forecast against plan. Includes delay inherited from earlier stages. Red is late, blue is early.`
+      : heatMetric === "lost" ? `Delay each stage created itself by W${T}: actual minus planned durations. This is where the problem starts, as opposed to where it shows up. Red is weeks lost, blue is weeks gained.`
+      : `CPI per territory and stage at W${T}. Red is over budget, blue is under. A dash means no work finished yet.`;
+    let h = `<table class="heat"><thead><tr><th>Territory</th>${STAGES.map(s => `<th style="text-align:center">${s.short}</th>`).join("")}</tr></thead><tbody>`;
+    terrs.forEach(t => {
+      h += `<tr><td>${t.name}</td>`;
+      STAGES.forEach(s => {
+        const done = SIM.truth[s.id][t.id][NB - 1].e <= T;
+        const tag = done ? `<span style="color:var(--text-secondary);font-weight:400"> · done</span>` : `<span style="color:var(--text-secondary);font-weight:400"> · B${lateWeeks(s.id, t.id).k + 1}</span>`;
+        if (heatMetric === "sched") {
+          const { k, late } = lateWeeks(s.id, t.id);
+          h += `<td class="c" style="background:${divFill(late, 4)}" title="${t.name} ${s.name}, batch ${k + 1}: forecast W${ST.fc[s.id][t.id][k].e}, plan W${plan[s.id][t.id][k].e}">${late ? signed(late, 0) + " wk" : "0"}${tag}</td>`;
+        } else if (heatMetric === "lost") {
+          const l = lostWeeks(s.id, t.id);
+          h += `<td class="c" style="background:${divFill(l, 4)}">${l ? signed(l, 0) + " wk" : "0"}${tag}</td>`;
+        } else {
+          const c = stageCPI(s.id, t.id);
+          h += c == null ? `<td class="c" style="background:#2a2a28;color:var(--text-muted)">–</td>`
+            : `<td class="c" style="background:${divFill(1 / c - 1, 0.25)}" title="${t.name} ${s.name}: earned ${money(ST.M[t.id][s.id].evT)}, actual ${money(ST.M[t.id][s.id].acT)}">${c.toFixed(2)}</td>`;
+        }
+      });
+      h += "</tr>";
+    });
+    document.getElementById("heat").innerHTML = h + "</tbody></table>";
+  }
+
+  function filesCum(sc, sid, terrs, NN) {
+    const o = new Array(NN + 1).fill(0);
+    terrs.forEach(t => sc[sid][t.id].forEach((b, k) => { for (let w = b.e; w <= NN; w++) o[w] += BATCHES[k]; }));
+    return o;
+  }
+  function renderTrackStair() {
+    const terrs = sel(), NN = ST.NN, sids = stageFocus === "all" ? STAGES.map(s => s.id) : [stageFocus];
+    const top = TOTAL * terrs.length;
+    const host = document.getElementById("trackStair");
+    const m = { l: 62, r: 30, t: 14, b: 34 };
+    const f = frame(host, 380, m, NN, top, v => v ? fmt(v / 1000) + "k" : "0", [0, 1, 2, 3, 4].map(i => top * i / 4));
+    const series = sids.map(sid => ({ s: S[sid], p: filesCum(plan, sid, terrs, NN), a: filesCum(ST.fc, sid, terrs, NN) }));
+    series.forEach(({ s, p, a }) => {
+      el("path", { d: stepPath(f.x, f.y, p, 0, NN), fill: "none", stroke: s.color, "stroke-width": 1.5, "stroke-dasharray": "5 4", opacity: 0.55 }, f.svg);
+      el("path", { d: stepPath(f.x, f.y, a, 0, T), fill: "none", stroke: s.color, "stroke-width": 2.5 }, f.svg);
+      el("path", { d: stepPath(f.x, f.y, a, T, NN), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-dasharray": "1.5 3.5", "stroke-linecap": "round" }, f.svg);
+    });
+    todayLine(f);
+    hover(f, host.parentElement, document.getElementById("tipT"), w => {
+      let h = `<div class="t">End of week ${w}</div><div class="row" style="color:var(--text-muted)"><span></span><span>plan · ${w <= T ? "actual" : "forecast"}</span></div>`;
+      series.forEach(({ s, p, a }) => h += `<div class="row"><span><i class="sw" style="background:${s.color}"></i>${s.name}</span><b>${fmt(p[w])} · ${fmt(a[w])}</b></div>`);
+      return h + (terrs.length > 1 ? `<div class="note">Totals across ${terrs.length} territories.</div>` : "");
+    }, NN);
+    document.getElementById("trackLegend").innerHTML = (stageFocus === "all" ? STAGES : [S[stageFocus]]).map(s => `<span><i class="sq" style="background:${s.color}"></i>${s.name}</span>`).join("") +
+      `<span><i style="border-color:var(--text-muted);border-top-style:dashed"></i>Plan</span><span><i style="border-color:var(--text-secondary)"></i>Actual</span><span><i style="border-color:var(--text-secondary);border-top-style:dotted"></i>Forecast</span>`;
+    document.getElementById("trackSub").textContent = (terrs.length === 1 ? terrs[0].name + ". " : `Total across ${terrs.length} territories. `) + "Where the solid line sits below the dashed one, that stage is behind plan.";
+  }
+
+  function renderEVM() {
+    const terrs = sel(), a = agg(terrs), NN = ST.NN;
+    const fcCum = a.ac.slice(); for (let w = T + 1; w <= NN + 1; w++) fcCum[w] = fcCum[w - 1] + a.fcw[w];
+    const tk = niceTicks(Math.max(a.BAC, a.EAC));
+    const host = document.getElementById("evm");
+    const f = frame(host, 320, { l: 66, r: 120, t: 14, b: 34 }, NN, tk.top, v => v ? moneyShort(v).replace(".00M", "M") : "$0", Array.from({ length: tk.n + 1 }, (_, i) => i * tk.tick));
+    el("path", { d: stepPath(f.x, f.y, a.pv, 0, NN), fill: "none", stroke: "var(--pv)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, f.svg);
+    el("path", { d: stepPath(f.x, f.y, fcCum, T, NN), fill: "none", stroke: "var(--ac)", "stroke-width": 2, "stroke-dasharray": "1.5 3.5", "stroke-linecap": "round" }, f.svg);
+    el("path", { d: stepPath(f.x, f.y, a.ac, 0, T), fill: "none", stroke: "var(--ac)", "stroke-width": 2.5 }, f.svg);
+    el("path", { d: stepPath(f.x, f.y, a.ev, 0, T), fill: "none", stroke: "var(--ev)", "stroke-width": 2.5 }, f.svg);
+    todayLine(f);
+    const lab = [{ y: f.y(a.BAC), s: `Budget ${moneyShort(a.BAC)}` }, { y: f.y(fcCum[NN]), s: `Forecast ${moneyShort(fcCum[NN])}` }].sort((p, q) => p.y - q.y);
+    if (lab[1].y - lab[0].y < 15) lab[1].y = lab[0].y + 15;
+    lab.forEach(l => txt(f.svg, { x: f.x(NN) + 8, y: l.y + 4, class: "dlabel" }, l.s));
+    hover(f, host.parentElement, document.getElementById("tipE"), w => {
+      let h = `<div class="t">End of week ${w}</div><div class="row"><span>Planned value</span><b>${money(a.pv[w])}</b></div>`;
+      if (w <= T) h += `<div class="row"><span>Earned value</span><b>${money(a.ev[w])}</b></div><div class="row"><span>Actual cost</span><b>${money(a.ac[w])}</b></div><div class="row"><span>CPI · SPI</span><b>${(a.ac[w] ? a.ev[w] / a.ac[w] : 1).toFixed(2)} · ${(a.pv[w] ? a.ev[w] / a.pv[w] : 1).toFixed(2)}</b></div>`;
+      else h += `<div class="row"><span>Forecast cost</span><b>${money(fcCum[w])}</b></div>`;
+      return h;
+    }, NN);
+    document.getElementById("evmSub").textContent = `${terrs.length === 1 ? terrs[0].name : "Total across " + terrs.length + " territories"}. At W${T} the plan expected ${moneyShort(a.PV)} of work done; ${moneyShort(a.EV)} was earned at a cost of ${moneyShort(a.AC)}.`;
+  }
+
+  function renderScenario() {
+    const name = id => TB[id].name;
+    const by = c => TERR.filter(t => SIM.cls[t.id] === c);
+    const stg = t => ["tr", "rec", "mas", "qa"].filter(s => SIM.stageCls[t.id][s] !== "neutral").map(s => S[s].short).join(" and ");
+    document.getElementById("scenario").innerHTML =
+      `Scenario ${SIM.seed}. Each batch, stage and territory draws a change in weeks and a cost factor. ` +
+      `<b>On plan, give or take</b> (−1 to +1 weeks, cost × 0.85 to 1.15): ${by("neutral").map(t => name(t.id)).join(", ")}. ` +
+      `<b>Lagging</b> (0 to +2 weeks, cost × 0.95 to 1.40): ${by("lag").map(t => `${name(t.id)} in ${stg(t)}`).join("; ")}. ` +
+      `<b>Leading</b> (−2 to 0 weeks, cost × 0.80 to 1.00): ${by("lead").map(t => `${name(t.id)} in ${stg(t)}`).join("; ")}. ` +
+      `Other stages in those territories behave like the first group. One-week items in those stages keep their duration, so that group stays centred on the plan. Delays carry forward through the dependencies.`;
+  }
+
+  // =================== Plan view ===================
+  const planBook = {};
+  TERR.forEach(t => { planBook[t.id] = {}; STAGES.forEach(st => {
+    planBook[t.id][st.id] = st.id === "qa"
+      ? Array.from({ length: plan.qa[t.id][NB - 1].e - QA_FORM }, (_, i) => ({ w: QA_FORM + 1 + i, v: QA_WEEK }))
+      : plan[st.id][t.id].map((b, k) => ({ w: b.e, v: pcost(st.id, t.id, k) }));
+  }); });
+  const stageCost = (sid, tid) => planBook[tid][sid].reduce((a, b) => a + b.v, 0);
+  const terrCost = tid => STAGES.reduce((a, st) => a + stageCost(st.id, tid), 0);
+
+  function renderPlanTiles() {
+    const terrs = sel();
+    const budget = terrs.reduce((a, t) => a + terrCost(t.id), 0);
+    const busy = STAGES.map(s => ({ s, w: plan[s.id][terrs[0].id].reduce((a, b) => a + (b.e - b.s), 0) })).sort((a, b) => b.w - a.w)[0];
+    const first = plan.qa[terrs[0].id][0].e;
+    const tiles = [
+      ["Files in scope", fmt(TOTAL * terrs.length), terrs.length === 1 ? terrs[0].name : `${fmt(TOTAL)} per territory × ${terrs.length}`],
+      ["Final delivery", `Week ${N}`, `about ${(N / 4.33).toFixed(1)} months`],
+      ["Budget", moneyShort(budget), `${money2(budget / (TOTAL * terrs.length))} per file${terrs.length > 1 ? " on average" : ""}`],
+      ["Bottleneck stage", busy.s.name, `busy ${busy.w} of ${N} weeks`],
+      ["First delivery", `Week ${first}`, `batch 1 (${fmt(BATCHES[0])} files) through QA`]
+    ];
+    document.getElementById("pTiles").innerHTML = tiles.map(([k, v, d]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join("");
+  }
+  function renderPlanStair() {
+    const terrs = sel(), top = TOTAL * terrs.length, host = document.getElementById("stair");
+    const f = frame(host, 400, { l: 62, r: 215, t: 14, b: 34 }, N, top, v => v ? fmt(v / 1000) + "k" : "0", [0, 1, 2, 3, 4].map(i => top * i / 4));
+    const series = STAGES.map(s => ({ s, v: filesCum(plan, s.id, terrs, N) }));
+    const labs = [];
+    series.forEach(({ s, v }) => { el("path", { d: stepPath(f.x, f.y, v, 0, N), fill: "none", stroke: s.color, "stroke-width": 2 }, f.svg); labs.push({ s, y: f.y(v[N]), fin: v.findIndex(x => x === v[N]) }); });
+    labs.forEach((l, i) => { l.ly = l.y + 4 + i * 15; });
+    labs.forEach(l => { el("rect", { x: f.x(N) + 8, y: l.ly - 6, width: 9, height: 3, rx: 1.5, fill: l.s.color }, f.svg); txt(f.svg, { x: f.x(N) + 22, y: l.ly, class: "dlabel" }, `${l.s.name}, done W${l.fin}`); });
+    hover(f, host.parentElement, document.getElementById("tip"), w => {
+      let h = `<div class="t">End of week ${w}</div>`;
+      series.forEach(({ s, v }) => {
+        const b = plan[s.id][terrs[0].id].findIndex(b => b.s < w && b.e >= w);
+        h += `<div class="row"><span><i class="sw" style="background:${s.color}"></i>${s.name}${b >= 0 ? ` <span style="color:var(--text-muted)">· B${b + 1}</span>` : ""}</span><b>${fmt(v[w])}</b></div>`;
+      });
+      return h + `<div class="note">${terrs.length > 1 ? "Totals across " + terrs.length + " territories. " : ""}B = batch in progress.</div>`;
+    }, N);
+    document.getElementById("chartSub").textContent = terrs.length === 1
+      ? `${terrs[0].name}, ${fmt(TOTAL)} files. Content Management counts the source files released to this territory.`
+      : `Total across ${terrs.length} territories. Content Management counts each source file once per territory it is released to.`;
+    let h = `<table><thead><tr><th>Week</th>${series.map(x => `<th>${x.s.name}</th>`).join("")}</tr></thead><tbody>`;
+    for (let w = 1; w <= N; w++) h += `<tr><td>W${w}</td>${series.map(x => `<td>${fmt(x.v[w])}</td>`).join("")}</tr>`;
+    document.getElementById("stairTable").innerHTML = h + "</tbody></table>";
+  }
+  function renderGantt() {
+    const host = document.getElementById("gantt"); host.innerHTML = "";
+    const W = host.clientWidth || 1100, rowH = 30, m = { l: 150, r: 150, t: 6, b: 28 };
+    const H = m.t + STAGES.length * rowH + m.b, iw = W - m.l - m.r, x = w => m.l + (w / N) * iw;
+    const svg = el("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}` }, host);
+    for (let w = 0; w <= N; w += 4) { el("line", { x1: x(w), x2: x(w), y1: m.t, y2: H - m.b, stroke: "var(--grid)" }, svg); if (w) txt(svg, { x: x(w), y: H - 10, "text-anchor": "middle" }, "W" + w); }
+    const tip = document.getElementById("tip2"), card = host.parentElement, tid = TERR[0].id;
+    STAGES.forEach((s, r) => {
+      const yy = m.t + r * rowH;
+      txt(svg, { x: m.l - 10, y: yy + rowH / 2 + 4, "text-anchor": "end", class: "dlabel" }, s.name);
+      plan[s.id][tid].forEach((b, k) => {
+        const bx = x(b.s) + 1, bw = Math.max(2, x(b.e) - x(b.s) - 2);
+        el("rect", { x: bx, y: yy + 5, width: bw, height: rowH - 10, rx: 4, fill: s.color, "fill-opacity": k % 2 ? 0.7 : 1 }, svg);
+        if (bw > 22) txt(svg, { x: bx + bw / 2, y: yy + rowH / 2 + 4, "text-anchor": "middle", style: "fill:#111312;font-weight:600;font-size:11px" }, "B" + (k + 1));
+        const hit = el("rect", { x: bx, y: yy + 2, width: bw, height: rowH - 4, fill: "transparent" }, svg);
+        hit.addEventListener("mousemove", ev => {
+          tip.innerHTML = `<div class="t">${s.name}, batch ${k + 1}</div><div class="row"><span>Files${s.id === "cm" ? " (source)" : ""}</span><b>${fmt(BATCHES[k])}</b></div><div class="row"><span>Weeks</span><b>W${b.s + 1} to W${b.e}</b></div><div class="row"><span>Duration</span><b>${b.e - b.s} wk</b></div>`;
+          tip.style.display = "block"; const cr = card.getBoundingClientRect();
+          let left = ev.clientX - cr.left + 14; if (left + tip.offsetWidth > cr.width - 8) left = ev.clientX - cr.left - tip.offsetWidth - 14;
+          tip.style.left = left + "px"; tip.style.top = (ev.clientY - cr.top + 14) + "px";
+        });
+        hit.addEventListener("mouseleave", () => tip.style.display = "none");
+      });
+      txt(svg, { x: m.l + iw + 10, y: yy + rowH / 2 + 4 }, "done W" + plan[s.id][tid][NB - 1].e);
+    });
+  }
+  function renderSpend() {
+    const terrs = sel(), weekly = new Array(N + 1).fill(0);
+    terrs.forEach(t => STAGES.forEach(s => planBook[t.id][s.id].forEach(b => weekly[b.w] += b.v)));
+    const c = cum(weekly), total = c[N], tk = niceTicks(total), host = document.getElementById("spend");
+    const f = frame(host, 300, { l: 66, r: 215, t: 14, b: 34 }, N, tk.top, v => v ? moneyShort(v).replace(".00M", "M") : "$0", Array.from({ length: tk.n + 1 }, (_, i) => i * tk.tick));
+    const d = stepPath(f.x, f.y, c, 0, N);
+    el("path", { d: d + `V${f.y(0)}H${f.x(0)}Z`, fill: "var(--accent)", "fill-opacity": 0.08 }, f.svg);
+    el("path", { d, fill: "none", stroke: "var(--accent)", "stroke-width": 2 }, f.svg);
+    const half = c.findIndex(v => v >= total / 2);
+    el("line", { x1: f.x(half), x2: f.x(half), y1: f.y(total / 2), y2: f.y(0), stroke: "var(--text-muted)", "stroke-dasharray": "2 3" }, f.svg);
+    txt(f.svg, { x: f.x(half) + 6, y: f.y(0) - 8, class: "dlabel" }, `half the budget by W${half}`);
+    txt(f.svg, { x: f.x(N) + 10, y: f.y(total) + 4, class: "dlabel" }, money(total));
+    hover(f, host.parentElement, document.getElementById("tip3"), w => `<div class="t">End of week ${w}</div><div class="row"><span>Spent this week</span><b>${money(weekly[w])}</b></div><div class="row"><span>Cumulative</span><b>${money(c[w])}</b></div><div class="row"><span>Share of budget</span><b>${(100 * c[w] / total).toFixed(1)}%</b></div>`, N);
+    document.getElementById("spendSub").textContent = (terrs.length === 1 ? terrs[0].name + ". " : `Total across ${terrs.length} territories. `) + "Per-file costs are booked when a batch completes a stage; QA teams are booked every week. This is the planned value that actual cost is measured against.";
+  }
+  function renderBudget() {
+    const terrs = sel();
+    const rows = terrs.map(t => { const parts = STAGES.map(s => ({ s, v: stageCost(s.id, t.id) })); return { t, parts, total: parts.reduce((a, p) => a + p.v, 0) }; });
+    const host = document.getElementById("budgetBars"); host.innerHTML = "";
+    const W = host.clientWidth || 1100, rowH = 30, m = { l: 150, r: 110, t: 6, b: 6 }, H = m.t + rows.length * rowH + m.b, iw = W - m.l - m.r;
+    const vmax = Math.max(...TERR.map(t => terrCost(t.id)));
+    const svg = el("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}` }, host);
+    const tip = document.getElementById("tip4"), card = host.parentElement;
+    rows.forEach((r, i) => {
+      const yy = m.t + i * rowH; txt(svg, { x: m.l - 10, y: yy + rowH / 2 + 4, "text-anchor": "end", class: "dlabel" }, r.t.name);
+      let x0 = m.l;
+      r.parts.forEach((p, j) => {
+        const w = (p.v / vmax) * iw, last = j === r.parts.length - 1;
+        el("rect", { x: x0, y: yy + 6, width: Math.max(0.5, w - (last ? 0 : 2)), height: rowH - 12, rx: last ? 4 : 0, fill: p.s.color }, svg);
+        if (last && w > 8) el("rect", { x: x0, y: yy + 6, width: 4, height: rowH - 12, fill: p.s.color }, svg);
+        const hit = el("rect", { x: x0, y: yy + 2, width: Math.max(4, w), height: rowH - 4, fill: "transparent" }, svg);
+        hit.addEventListener("mousemove", ev => {
+          tip.innerHTML = `<div class="t">${r.t.name}, ${p.s.name}</div><div class="row"><span>Budget</span><b>${money(p.v)}</b></div><div class="row"><span>Share of territory</span><b>${(100 * p.v / r.total).toFixed(1)}%</b></div><div class="row"><span>Per file</span><b>${money2(p.v / TOTAL)}</b></div>`;
+          tip.style.display = "block"; const cr = card.getBoundingClientRect();
+          let left = ev.clientX - cr.left + 14; if (left + tip.offsetWidth > cr.width - 8) left = ev.clientX - cr.left - tip.offsetWidth - 14;
+          tip.style.left = left + "px"; tip.style.top = (ev.clientY - cr.top + 14) + "px";
+        });
+        hit.addEventListener("mouseleave", () => tip.style.display = "none");
+        x0 += w;
+      });
+      txt(svg, { x: x0 + 8, y: yy + rowH / 2 + 4, class: "dlabel" }, moneyShort(r.total));
+    });
+    let h = `<table><thead><tr><th>Territory</th>${STAGES.map(s => `<th>${s.name}</th>`).join("")}<th>Total</th></tr></thead><tbody>`;
+    rows.forEach(r => h += `<tr><td>${r.t.name}</td>${r.parts.map(p => `<td>${money(p.v)}</td>`).join("")}<td>${money(r.total)}</td></tr>`);
+    const tot = STAGES.map((s, j) => rows.reduce((a, r) => a + r.parts[j].v, 0));
+    h += `<tr><td><b>Total</b></td>${tot.map(v => `<td><b>${money(v)}</b></td>`).join("")}<td><b>${money(tot.reduce((a, b) => a + b, 0))}</b></td></tr>`;
+    document.getElementById("budgetTable").innerHTML = h + "</tbody></table>";
+  }
+  function renderAssumptions() {
+    const d = (s, n) => Math.max(1, Math.ceil(s.base * Math.pow(n / 5000, s.e) - 1e-6));
+    document.getElementById("assump").innerHTML = `<table><thead><tr><th>Stage</th><th>Base (5k)</th><th>e</th><th>2k</th><th>5k</th><th>10k</th><th>Rate</th></tr></thead><tbody>${
+      STAGES.map(s => `<tr><td><i class="sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;background:${s.color}"></i>${s.name}</td><td>${s.base} wk</td><td>${s.e.toFixed(2)}</td><td>${d(s, 2000)}</td><td>${d(s, 5000)}</td><td>${d(s, 10000)}</td><td>${s.id === "qa" ? money(QA_WEEK) + " / wk" : money(s.rate)}</td></tr>`).join("")
+    }</tbody></table><p class="sub" style="margin-top:8px">Weeks for a batch of 2,000, 5,000 and 10,000 files, per territory. Rates are German fees. QA is billed per tester team per week, from the week the teams are formed (W${QA_FORM + 1}) until their territory delivers, idle weeks included.</p>
+      <p class="sub" style="margin-top:14px">Territory cost factors, German = 1.00. They apply to Translation and Recording. Content Management, Mastering and QA use German rates for every territory.</p>
+      <table><thead><tr><th>Territory</th><th>Cost factor</th><th>$ per file</th><th>Budget</th></tr></thead><tbody>${
+        TERR.map(t => { const b = terrCost(t.id); return `<tr><td>${t.name}</td><td>${t.cf.toFixed(2)}</td><td>${money2(b / TOTAL)}</td><td>${money(b)}</td></tr>`; }).join("")
+      }</tbody></table>`;
+    document.getElementById("batchList").textContent = BATCHES.map((n, i) => `B${i + 1} ${fmt(n)}`).join(", ") + `, ${fmt(TOTAL)} in total,`;
+    document.getElementById("legend").innerHTML = STAGES.map(s => `<span><i style="border-color:${s.color}"></i>${s.name}</span>`).join("");
+    document.getElementById("legend2").innerHTML = STAGES.map(s => `<span><i class="sq" style="background:${s.color}"></i>${s.name}</span>`).join("");
+  }
+
+  // =================== Wiring ===================
+  function renderAll() {
+    renderChips();
+    if (view === "track") { renderTiles(); renderFlags(); renderScore(); renderHeat(); renderTrackStair(); renderEVM(); renderScenario(); }
+    else { renderPlanTiles(); renderPlanStair(); renderGantt(); renderSpend(); renderBudget(); }
+  }
+  const setView = v => {
+    view = v;
+    document.getElementById("tabTrack").setAttribute("aria-selected", v === "track");
+    document.getElementById("tabPlan").setAttribute("aria-selected", v === "plan");
+    document.getElementById("viewTrack").hidden = v !== "track";
+    document.getElementById("viewPlan").hidden = v !== "plan";
+    document.getElementById("weekCtl").style.visibility = v === "track" ? "visible" : "hidden";
+    renderAll();
+  };
+  document.getElementById("tabTrack").addEventListener("click", () => setView("track"));
+  document.getElementById("tabPlan").addEventListener("click", () => setView("plan"));
+  document.getElementById("hmSched").addEventListener("click", () => { heatMetric = "sched"; renderHeat(); });
+  document.getElementById("hmCost").addEventListener("click", () => { heatMetric = "cost"; renderHeat(); });
+  document.getElementById("hmLost").addEventListener("click", () => { heatMetric = "lost"; renderHeat(); });
+  const TODAY = 37; const wk = document.getElementById("week");
+  wk.addEventListener("input", () => { T = Math.min(TODAY, +wk.value); document.getElementById("weekVal").textContent = "W" + T;
+    document.getElementById("weekNote").textContent = T === TODAY ? "today" : `as reported ${TODAY - T} week${TODAY - T > 1 ? "s" : ""} ago`; status(); renderAll(); });
+  document.getElementById("newScen").addEventListener("click", () => { simulate(Math.floor(Math.random() * 9000) + 1000); status(); renderAll(); });
+  [["tableBtn", "stairTable"], ["budgetBtn", "budgetTable"]].forEach(([b, t]) => {
+    const btn = document.getElementById(b);
+    btn.addEventListener("click", () => { const tbl = document.getElementById(t), open = tbl.hidden; tbl.hidden = !open; btn.textContent = open ? "Hide table" : "Show as table"; btn.setAttribute("aria-expanded", open); });
+  });
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(renderAll, 120); });
+
+  simulate(5898); status(); renderAssumptions(); renderAll();
+})();
+</script>
+</body>
+</html>

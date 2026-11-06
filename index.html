@@ -256,6 +256,8 @@
   .project-card:nth-of-type(3) { animation-delay: 0.19s; }
   .project-card:nth-of-type(4) { animation-delay: 0.26s; }
   .project-card:nth-of-type(5) { animation-delay: 0.33s; }
+  .project-card:nth-of-type(6) { animation-delay: 0.40s; }
+  .project-card:nth-of-type(7) { animation-delay: 0.47s; }
   .project-card[hidden] { display: none; }
 
   .card-top {
@@ -592,6 +594,36 @@
             <a class="card-link" href="https://voquoting.streamlit.app/" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               Open App
+            </a>
+          </div>
+        </article>
+
+        <!-- Localization Production Tracking -->
+        <article class="project-card" data-cat="bi" data-accent="amber">
+          <div class="card-content">
+            <div class="card-top">
+              <span class="card-type type-pbi">Dashboard</span>
+            </div>
+            <h2>Localization Production Tracking</h2>
+            <p>
+              A planning and tracking dashboard for a voice-over localization project: 40,000 files for each of 8 territories, moving in batches through content management, translation, recording, mastering and QA. The plan sets dates and costs for every batch, stage and territory, and simulated production data at week 37 is measured against it.
+            </p>
+            <p>
+              Schedule and cost are read through earned value (SPI, CPI and schedule variance in weeks), down to a single territory and stage. Delay is split into what a stage created itself and what it inherited, so the risk flags point at the vendor causing a slip rather than at every team waiting on it. QA starts a batch only once every territory has delivered it, so one late territory holds up the rest, and the idle tester weeks are costed.
+            </p>
+            <div class="tags">
+              <span class="tag">JavaScript</span>
+              <span class="tag">Production Planning</span>
+              <span class="tag">Earned Value</span>
+              <span class="tag">Risk Flagging</span>
+              <span class="tag">Simulation</span>
+              <span class="tag">Localization</span>
+            </div>
+          </div>
+          <div class="card-link-col">
+            <a class="card-link primary" href="loc-production.html">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><polyline points="7 14 11 9 15 12 20 6"/></svg>
+              Open
             </a>
           </div>
         </article>
